@@ -11,6 +11,7 @@ import eventlet.wsgi
 from PIL import Image
 from flask import Flask
 from io import BytesIO
+import cv2
 
 from keras.models import load_model
 import h5py
@@ -60,7 +61,14 @@ def telemetry(sid, data):
         # The current image from the center camera of the car
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
-        image_array = np.asarray(image)
+        image_array_rgb = np.asarray(image)
+        image_array = cv2.cvtColor(image_array_rgb, cv2.COLOR_RGB2BGR)
+
+        print(image_array.shape)
+        ## added by jasprit to resize the image to dimensions that the CNN model accepts
+        # image_array = cv2.resize(image_array[60:, :], (200, 66))
+        image_array = cv2.resize(image_array[60:, :], (200, 66))
+
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
 
         throttle = controller.update(float(speed))
